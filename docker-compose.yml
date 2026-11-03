@@ -1,0 +1,76 @@
+services:
+  api:
+    build:
+      context: .
+      target: api
+    command:
+      - uvicorn
+      - demand.service.app:create_app
+      - --factory
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --workers
+      - "2"
+    environment:
+      DEMAND_ARTIFACTS: /app/artifacts
+      DEMAND_API_KEY: ${DEMAND_API_KEY:-}
+      DEMAND_RATE_LIMIT_PER_MINUTE: ${DEMAND_RATE_LIMIT_PER_MINUTE:-120}
+      DEMAND_MAX_BODY_BYTES: ${DEMAND_MAX_BODY_BYTES:-65536}
+    volumes:
+      - ./artifacts:/app/artifacts:ro
+    ports:
+      - "127.0.0.1:8000:8000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 1g
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  dashboard:
+    build:
+      context: .
+      target: dashboard
+    command:
+      - streamlit
+      - run
+      - src/demand/dashboard/app.py
+      - --server.address
+      - 0.0.0.0
+      - --server.port
+      - "8501"
+      - --server.headless
+      - "true"
+    environment:
+      DEMAND_ARTIFACTS: /app/artifacts
+    volumes:
+      - ./artifacts:/app/artifacts:ro
+    ports:
+      - "127.0.0.1:8501:8501"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /home/appuser/.streamlit
+      - /home/appuser/.cache
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 512m
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy

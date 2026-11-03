@@ -1,0 +1,25 @@
+# Fast end-to-end demo on generated M5-shaped data (no Kaggle account required).
+# Usage: demand --config configs/base.yaml --config configs/demo.yaml synth
+seed: 7
+
+data:
+  raw_dir: data/raw/synthetic
+  stores: [CA_1, TX_1]
+  depts: [FOODS_3]
+  synthetic: true
+
+features:
+  horizon: 28
+  lags: [7, 14, 28, 364]
+  origin_stride_days: 14
+  train_window_days: 700
+
+eval:
+  n_folds: 3
+  bootstrap_reps: 500
+
+synthetic:
+  stores: [CA_1, TX_1]
+  items_per_store: 3
+  days: 760
+  start_date: "2011-01-29"

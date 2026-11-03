@@ -1,0 +1,24 @@
+# environments
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# data + generated artifacts (never commit Kaggle data)
+data/
+artifacts/
+reports/
+!reports/.gitkeep
+
+# local config
+.env
+configs/local.yaml
+.streamlit.pid
+
+# os
+.DS_Store
+Thumbs.db

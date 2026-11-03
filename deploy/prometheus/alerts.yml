@@ -1,0 +1,49 @@
+groups:
+  - name: demand-api
+    rules:
+      - alert: DemandApiNotReady
+        expr: demand_model_loaded == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Forecast API has no loaded model
+          runbook: docs/deployment.md#runbook
+      - alert: DemandApiHighErrorRate
+        expr: |
+          sum(rate(demand_http_requests_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(demand_http_requests_total[5m])), 1) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: More than 5% of API requests are failing
+          runbook: docs/deployment.md#runbook
+      - alert: DemandApiLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(demand_http_request_seconds_bucket[5m]))
+          ) > 0.15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Forecast API p95 latency exceeds the 150 ms budget
+          runbook: docs/deployment.md#runbook
+      - alert: DemandApiFlapping
+        expr: changes(demand_model_loaded[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Model readiness is flapping
+          runbook: docs/deployment.md#runbook
+      - alert: DemandFeatureDriftDetected
+        expr: demand_drift_alert == 1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Significant covariate shift or target drift detected (PSI >= 0.25)
+          runbook: docs/deployment.md#runbook
